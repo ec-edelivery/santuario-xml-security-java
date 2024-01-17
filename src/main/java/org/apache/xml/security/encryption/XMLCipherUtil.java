@@ -31,14 +31,25 @@ import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PSource;
 
 import org.apache.xml.security.algorithms.JCEMapper;
+import org.apache.xml.security.encryption.keys.content.derivedKey.ConcatKDFParamsImpl;
+import org.apache.xml.security.encryption.keys.content.derivedKey.HKDFParamsImpl;
 import org.apache.xml.security.encryption.params.ConcatKDFParams;
+import org.apache.xml.security.encryption.params.HKDFParams;
 import org.apache.xml.security.encryption.params.KeyAgreementParameters;
 import org.apache.xml.security.encryption.params.KeyDerivationParameters;
 import org.apache.xml.security.exceptions.XMLSecurityException;
-import org.apache.xml.security.encryption.keys.content.derivedKey.ConcatKDFParamsImpl;
-import org.apache.xml.security.encryption.keys.content.derivedKey.KeyDerivationMethodImpl;
+import org.apache.xml.security.signature.XMLSignature;
 import org.apache.xml.security.utils.EncryptionConstants;
 import org.apache.xml.security.utils.KeyUtils;
+
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.OAEPParameterSpec;
+import javax.crypto.spec.PSource;
+import java.security.*;
+import java.security.spec.AlgorithmParameterSpec;
+import java.security.spec.MGF1ParameterSpec;
+import java.util.Base64;
 
 public final class XMLCipherUtil {
 
@@ -54,9 +65,9 @@ public final class XMLCipherUtil {
      * for block cipher encryption and decryption.
      *
      * @param algorithm the XML encryption algorithm URI
-     * @param iv the initialization vector
+     * @param iv        the initialization vector
      * @return the newly constructed AlgorithmParameterSpec instance, appropriate for the
-     *         specified algorithm
+     * specified algorithm
      */
     public static AlgorithmParameterSpec constructBlockCipherParameters(String algorithm, byte[] iv) {
         if (EncryptionConstants.ALGO_ID_BLOCKCIPHER_AES128_GCM.equals(algorithm)
@@ -186,6 +197,33 @@ public final class XMLCipherUtil {
         }
     }
 
+    /**
+     * Get the JCE hmac algorithm name for the given digest uri
+     *
+     * @param hmacAlgorithmURI the digest algorithm
+     * @return the JCE hmac name algorithm
+     * @throws IllegalArgumentException if the digest algorithm is not supported/unknown
+     */
+    public static String getJCEMacHashForUri(String hmacAlgorithmURI) throws NoSuchAlgorithmException {
+
+        switch (hmacAlgorithmURI) {
+            case XMLSignature.ALGO_ID_MAC_HMAC_SHA1:
+                return "HmacSHA1";
+            case XMLSignature.ALGO_ID_MAC_HMAC_SHA224:
+                return "HmacSHA224";
+            case XMLSignature.ALGO_ID_MAC_HMAC_SHA256:
+                return "HmacSHA256";
+            case XMLSignature.ALGO_ID_MAC_HMAC_SHA384:
+                return "HmacSHA384";
+            case XMLSignature.ALGO_ID_MAC_HMAC_SHA512:
+                return "HmacSHA512";
+            case XMLSignature.ALGO_ID_MAC_HMAC_RIPEMD160:
+                return "HMACRIPEMD160";
+            default:
+                throw new NoSuchAlgorithmException("Unknown/not supported hash algorithm: [" + hmacAlgorithmURI + "]  for MacHash algorithm");
+        }
+    }
+
 
     /**
      * Construct an KeyAgreementParameterSpec object from the given parameters
@@ -228,7 +266,7 @@ public final class XMLCipherUtil {
         KeyAgreementParameters ecdhKeyAgreementParameters = new KeyAgreementParameters(
                 actorType,
                 agreementAlgorithmURI, keyDerivationParameter);
-        if (actorType == KeyAgreementParameters.ActorType.RECIPIENT  ) {
+        if (actorType == KeyAgreementParameters.ActorType.RECIPIENT) {
             ecdhKeyAgreementParameters.setRecipientPrivateKey(keyAgreementPrivateKey);
             ecdhKeyAgreementParameters.setOriginatorPublicKey(keyAgreementPublicKey);
         } else {
@@ -249,15 +287,21 @@ public final class XMLCipherUtil {
      */
     public static KeyDerivationParameters constructKeyDerivationParameter(KeyDerivationMethod keyDerivationMethod, int keyBitLength) throws XMLSecurityException {
         String keyDerivationAlgorithm = keyDerivationMethod.getAlgorithm();
-        if (!EncryptionConstants.ALGO_ID_KEYDERIVATION_CONCATKDF.equals(keyDerivationAlgorithm)) {
-            throw new XMLEncryptionException("unknownAlgorithm", keyDerivationAlgorithm);
+        if (EncryptionConstants.ALGO_ID_KEYDERIVATION_CONCATKDF.equals(keyDerivationAlgorithm)) {
+            ConcatKDFParamsImpl concatKDFParams = (ConcatKDFParamsImpl) keyDerivationMethod.getKDFParams();
+
+            return constructConcatKeyDerivationParameter(keyBitLength, concatKDFParams.getDigestMethod(), concatKDFParams.getAlgorithmId(),
+                    concatKDFParams.getPartyUInfo(), concatKDFParams.getPartyVInfo(),
+                    concatKDFParams.getSuppPubInfo(), concatKDFParams.getSuppPrivInfo());
+
+        } else if (EncryptionConstants.ALGO_ID_KEYDERIVATION_HKDF.equals(keyDerivationAlgorithm)) {
+            HKDFParamsImpl hKDFParams = (HKDFParamsImpl) keyDerivationMethod.getKDFParams();
+            return constructHKDFKeyDerivationParameter(keyBitLength,
+                    hKDFParams.getPRFAlgorithm(),
+                    hKDFParams.getSalt() != null ? Base64.getDecoder().decode(hKDFParams.getSalt()) : new byte[0],
+                    hKDFParams.getInfo() != null ? Base64.getDecoder().decode(hKDFParams.getInfo()) : new byte[0]);
         }
-        ConcatKDFParamsImpl concatKDFParams = ((KeyDerivationMethodImpl) keyDerivationMethod).getConcatKDFParams();
-
-        return  constructConcatKeyDerivationParameter(keyBitLength, concatKDFParams.getDigestMethod(), concatKDFParams.getAlgorithmId(),
-                concatKDFParams.getPartyUInfo(), concatKDFParams.getPartyVInfo(),
-                concatKDFParams.getSuppPubInfo(),concatKDFParams.getSuppPrivInfo());
-
+        throw new XMLEncryptionException("unknownAlgorithm", keyDerivationAlgorithm);
     }
 
 
@@ -269,7 +313,7 @@ public final class XMLCipherUtil {
      * @return ConcatKeyDerivationParameter object
      */
     public static ConcatKDFParams constructConcatKeyDerivationParameter(int keyBitLength,
-                                                                        String digestMethod){
+                                                                        String digestMethod) {
         return constructConcatKeyDerivationParameter(keyBitLength, digestMethod, null, null, null, null, null);
     }
 
@@ -278,10 +322,10 @@ public final class XMLCipherUtil {
      *
      * @param keyBitLength expected derived key length
      * @param digestMethod digest method
-     * @param algorithmId algorithm id
-     * @param partyUInfo partyUInfo
-     * @param partyVInfo partyVInfo
-     * @param suppPubInfo suppPubInfo
+     * @param algorithmId  algorithm id
+     * @param partyUInfo   partyUInfo
+     * @param partyVInfo   partyVInfo
+     * @param suppPubInfo  suppPubInfo
      * @param suppPrivInfo suppPrivInfo
      * @return ConcatKeyDerivationParameter object
      */
@@ -300,5 +344,53 @@ public final class XMLCipherUtil {
         kdp.setSuppPubInfo(suppPubInfo);
         kdp.setSuppPrivInfo(suppPrivInfo);
         return kdp;
+    }
+
+    public static HKDFParams constructHKDFKeyDerivationParameter(int keyBitLength,
+                                                                 String hmacHashAlgorithm,
+                                                                 byte[] salt,
+                                                                 byte[] info) {
+        HKDFParams kdp = new HKDFParams(keyBitLength, hmacHashAlgorithm);
+        kdp.setSalt(salt);
+        kdp.setInfo(info);
+        return kdp;
+    }
+
+    /**
+     * Method hexStringToByteArray converts hex string to byte array.
+     *
+     * @param hexString the hex string to convert
+     * @return the byte array of the hex string
+     */
+    public static byte[] hexStringToByteArray(String hexString) {
+        int len = hexString.length();
+        byte[] data = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            data[i / 2] = (byte) ((Character.digit(hexString.charAt(i), 16) << 4)
+                    + Character.digit(hexString.charAt(i+1), 16));
+        }
+        return data;
+    }
+
+    /**
+     * Method byteArrayToHex converts byte array to hex string.
+     *
+     * @param ba the byte array to convert
+     * @return the hex string of the byte array
+     */
+    public static String byteArrayToHex(byte[] ba) {
+        if (ba == null) {
+            return null;
+        }
+        if (ba.length == 0) {
+            return "";
+        }
+
+        StringBuilder buffer = new StringBuilder(ba.length * 2);
+        for (byte b : ba) {
+            buffer.append(Character.forDigit((b >> 4) & 0xF, 16));
+            buffer.append(Character.forDigit((b & 0xF), 16));
+        }
+        return buffer.toString();
     }
 }
