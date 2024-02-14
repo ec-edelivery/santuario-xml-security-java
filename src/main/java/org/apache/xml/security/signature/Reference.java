@@ -683,7 +683,6 @@ public class Reference extends SignatureElementProxy {
         }
     }
 
-
     /**
      * Method calculateDigest
      *
@@ -776,7 +775,6 @@ public class Reference extends SignatureElementProxy {
         String content = XMLUtils.getFullTextChildrenFromNode(digestValueElement);
         return XMLUtils.decode(content);
     }
-
 
     /**
      * Tests reference validation is success or false

@@ -25,9 +25,9 @@
         <version>31</version>
     </parent>
 
-    <groupId>org.apache.santuario</groupId>
+    <groupId>eu.europa.ec.edelivery.apache.santuario</groupId>
     <artifactId>xmlsec</artifactId>
-    <version>3.0.5-SNAPSHOT</version>
+    <version>3.0.5-RC01</version>
     <packaging>bundle</packaging>
 
     <name>Apache XML Security for Java</name>
@@ -63,27 +63,45 @@
             </archive>
         </mailingList>
     </mailingLists>
-    <scm>
-        <connection>scm:git:https://gitbox.apache.org/repos/asf/santuario-xml-security-java.git</connection>
-        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/santuario-xml-security-java.git</developerConnection>
-        <url>https://gitbox.apache.org/repos/asf?p=santuario-xml-security-java.git;a=summary</url>
-      <tag>HEAD</tag>
-    </scm>
     <issueManagement>
         <system>JIRA</system>
         <url>https://issues.apache.org/jira/browse/SANTUARIO</url>
     </issueManagement>
+    <repositories>
+        <repository>
+            <id>edelivery-releases</id>
+            <url>https://ec.europa.eu/digital-building-blocks/artifact/content/repositories/eDelivery/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>edelivery-snapshots</id>
+            <url>https://ec.europa.eu/digital-building-blocks/artifact/content/repositories/eDelivery-snapshots/</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>edelivery-thirdparty</id>
+            <url>https://ec.europa.eu/digital-building-blocks/artifact/content/repositories/eDelivery-third-party/</url>
+        </repository>
+    </repositories>
+    <!-- Where to deploy binaries -->
     <distributionManagement>
         <repository>
-            <id>apache.releases.https</id>
-            <name>Apache Release Distribution Repository</name>
-            <url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
+            <id>edelivery-releases</id>
+            <url>https://ec.europa.eu/digital-building-blocks/artifact/content/repositories/eDelivery/</url>
         </repository>
         <snapshotRepository>
-            <id>apache.snapshots.https</id>
-            <name>Apache Development Snapshot Repository</name>
-            <url>https://repository.apache.org/content/repositories/snapshots</url>
-            <uniqueVersion>false</uniqueVersion>
+            <id>edelivery-snapshots</id>
+            <url>https://ec.europa.eu/digital-building-blocks/artifact/content/repositories/eDelivery-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 

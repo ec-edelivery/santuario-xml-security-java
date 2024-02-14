@@ -125,7 +125,6 @@ public class KeyUtils {
             this.oid = oid;
         }
 
-
         public String getName() {
             return name;
         }
@@ -196,7 +195,6 @@ public class KeyUtils {
                 : KeyPairGenerator.getInstance(algorithm, provider);
     }
 
-
     /**
      * Method generates a secret key for given KeyAgreementParameterSpec.
      *
@@ -223,7 +221,6 @@ public class KeyUtils {
             byte[] secret = keyAgreement.generateSecret();
             byte[] kek = deriveKeyEncryptionKey(secret, parameterSpec.getKeyDerivationParameter());
             return new SecretKeySpec(kek, "AES");
-
 
         } catch (XMLSecurityException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new XMLEncryptionException(e);
