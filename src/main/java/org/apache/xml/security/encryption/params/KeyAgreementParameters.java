@@ -52,10 +52,17 @@ public class KeyAgreementParameters implements AlgorithmParameterSpec {
     private PrivateKey recipientPrivateKey;
 
 
-    public KeyAgreementParameters(ActorType actorType, String keyAgreementAlgorithm, KeyDerivationParameters keyDerivationParameter) {
+    /**
+     * Constructor for KeyAgreementParameters
+     *
+     * @param actorType The actor type (originator or recipient) of the KeyAgreement algorithm
+     * @param keyAgreementAlgorithmURI The key agreement algorithm URI
+     * @param keyDerivationParameter The key derivation parameters
+     */
+    public KeyAgreementParameters(ActorType actorType, String keyAgreementAlgorithmURI, KeyDerivationParameters keyDerivationParameter) {
         this.actorType = actorType;
         this.KeyDerivationParameter = keyDerivationParameter;
-        this.keyAgreementAlgorithm = keyAgreementAlgorithm;
+        this.keyAgreementAlgorithm = keyAgreementAlgorithmURI;
     }
 
     public KeyDerivationParameters getKeyDerivationParameter() {

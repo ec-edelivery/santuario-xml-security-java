@@ -100,6 +100,7 @@
       <xs:element type="con:TransformAlgorithmsType" name="TransformAlgorithms" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
       <xs:element type="con:JCEAlgorithmMappingsType" name="JCEAlgorithmMappings" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
       <xs:element type="con:ResourceResolversType" name="ResourceResolvers" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
+      <xs:element type="con:SecurityAssertionType" name="SecurityAssertion"  minOccurs="0" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
     </xs:sequence>
     <xs:attribute type="xs:string" name="target"/>
   </xs:complexType>
@@ -122,4 +123,38 @@
       <xs:element type="con:ResolverType" name="Resolver" maxOccurs="unbounded" minOccurs="0" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
     </xs:sequence>
   </xs:complexType>
+
+  <xs:complexType name="SecurityAssertionType">
+    <xs:sequence>
+      <xs:element type="con:DeprecatedAlgorithmURIsType" name="DeprecatedAlgorithmURIs" minOccurs="0" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
+      <xs:element type="con:WeakAlgorithmURIsType" name="WeakAlgorithmURIs" minOccurs="0" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
+      <xs:element type="con:AssertSecureParameterImplementationsType" name="AssertSecureParameterImplementations" minOccurs="0" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="DeprecatedAlgorithmURIsType">
+    <xs:sequence>
+      <xs:element type="con:AlgorithmURIType" name="AlgorithmURI" maxOccurs="unbounded" minOccurs="0" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="WeakAlgorithmURIsType">
+    <xs:sequence>
+      <xs:element type="con:AlgorithmURIType" name="AlgorithmURI" maxOccurs="unbounded" minOccurs="0" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
+    </xs:sequence>
+  </xs:complexType>
+   <xs:simpleType name='AlgorithmURIType'>
+      <xs:restriction base="xs:anyURI"/>
+   </xs:simpleType>
+    <xs:complexType name="AssertSecureParameterImplementationsType">
+       <xs:sequence>
+         <xs:element type="con:SecureAlgorithmParameterAsserterType" name="SecureAlgorithmParameterAsserter" maxOccurs="unbounded" minOccurs="0" xmlns:con="http://www.xmlsecurity.org/NS/configuration"/>
+       </xs:sequence>
+     </xs:complexType>
+    <xs:complexType name="SecureAlgorithmParameterAsserterType">
+     <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="URI" use="required"/>
+          <xs:attribute type="xs:string" name="JAVACLASS" use="required"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
 </xs:schema>
