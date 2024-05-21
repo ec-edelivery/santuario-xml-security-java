@@ -18,6 +18,7 @@
  */
 package org.apache.xml.security.utils;
 
+import org.apache.xml.security.algorithms.assertions.SecurityAssertions;
 import org.apache.xml.security.algorithms.implementations.ECDSAUtils;
 import org.apache.xml.security.encryption.XMLEncryptionException;
 import org.apache.xml.security.encryption.keys.content.derivedKey.ConcatKDF;
@@ -214,6 +215,7 @@ public class KeyUtils {
                         "Cryptographic algorithm may not be secure, consider using a different algorithm (and keys).");
             }
             algorithm = algorithm + (algorithm.equalsIgnoreCase("EC") ? "DH" : "");
+            SecurityAssertions.assertSecureAlgorithmURI(algorithm);
             KeyAgreement keyAgreement = KeyAgreement.getInstance(algorithm);
             keyAgreement.init(privateKey);
             keyAgreement.doPhase(publicKey, true);

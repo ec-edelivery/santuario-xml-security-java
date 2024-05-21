@@ -32,12 +32,18 @@ import javax.xml.parsers.SAXParserFactory;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.apache.xml.security.algorithms.assertions.SecurityAssertions;
+import org.apache.xml.security.algorithms.assertions.SecurityValidationLevelType;
 import org.apache.xml.security.configuration.ConfigurationType;
 import org.apache.xml.security.configuration.ObjectFactory;
+import org.apache.xml.security.configuration.SecurityAssertionType;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.stax.ext.XMLSecurityConfigurationException;
 import org.apache.xml.security.utils.ClassLoaderUtils;
 import org.apache.xml.security.utils.I18n;
+
+import static org.apache.xml.security.stax.config.ConfigurationProperties.*;
+import static org.apache.xml.security.stax.config.ConfigurationProperties.PropertyNameType.*;
 
 /**
  * Class to load the algorithms-mappings from a configuration file.
@@ -45,7 +51,7 @@ import org.apache.xml.security.utils.I18n;
  *
  */
 public class Init {
-
+    private static final System.Logger LOG = System.getLogger(Init.class.getName());
     private static URI initialized;
 
     @SuppressWarnings("unchecked")
@@ -85,7 +91,19 @@ public class Init {
                 TransformerAlgorithmMapper.init(configurationTypeJAXBElement.getValue().getTransformAlgorithms(), callingClass);
                 ResourceResolverMapper.init(configurationTypeJAXBElement.getValue().getResourceResolvers(), callingClass);
 
-                I18n.init(ConfigurationProperties.getProperty("DefaultLanguageCode"), ConfigurationProperties.getProperty("DefaultCountryCode"));
+                I18n.init(getProperty(DEFAULT_LANGUAGE_CODE), getProperty(DEFAULT_COUNTRY_CODE));
+                SecurityAssertionType securityAssertion = configurationTypeJAXBElement.getValue().getSecurityAssertion();
+                if (securityAssertion == null) {
+                    LOG.log(System.Logger.Level.WARNING, "No SecurityAssertion configured, using default security assertion configuration");
+                    SecurityAssertions.initDefaultSecurityValidation();
+                } else {
+                    SecurityAssertions.init(securityAssertion);
+                    // init security parameters
+                    SecurityAssertions.initSecurityValidation(
+                            SecurityValidationLevelType.valueOf(getProperty(SECURITY_VALIDATION_LEVEL)),
+                            Integer.valueOf(getProperty(MAXIMUM_ALLOWED_REFERENCES_PER_MANIFEST)),
+                            Integer.valueOf(getProperty(MAXIMUM_ALLOWED_TRANSFORMS_PER_REFERENCE)));
+                }
 
             } catch (Exception e) {
                 //kind of chicken-egg problem here

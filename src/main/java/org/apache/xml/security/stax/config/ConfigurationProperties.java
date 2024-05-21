@@ -29,6 +29,37 @@ import org.apache.xml.security.configuration.PropertyType;
  *
  */
 public final class ConfigurationProperties {
+    /**
+     * Enumeration of Property names supported by the library with their default values
+     */
+    public enum PropertyNameType {
+        MAXIMUM_ALLOWED_TRANSFORMS_PER_REFERENCE("MaximumAllowedTransformsPerReference", "5"),
+        MAXIMUM_ALLOWED_REFERENCES_PER_MANIFEST("MaximumAllowedReferencesPerManifest" ,"30"),
+        DO_NOT_THROW_EXCEPTION_FOR_MANIFESTS("DoNotThrowExceptionForManifests" ,"false"),
+        ALLOW_MD5_ALGORITHM("AllowMD5Algorithm" ,"false"),
+        ALLOW_NOT_SAME_DOCUMENT_REFERENCES("AllowNotSameDocumentReferences" ,"false"),
+        MAXIMUM_ALLOWED_XML_STRUCTURE_DEPTH("MaximumAllowedXMLStructureDepth" ,"100"),
+        MAXIMUM_ALLOWED_ENCRYPTED_DATA_EVENTS("MaximumAllowedEncryptedDataEvents" ,"200"),
+        DEFAULT_LANGUAGE_CODE("DefaultLanguageCode" ,"en"),
+        DEFAULT_COUNTRY_CODE("DefaultCountryCode" ,"US"),
+        SECURITY_VALIDATION_LEVEL("SecurityValidationLevel", "INTERMEDIATE");
+
+        private String name;
+        private String defaultValue;
+
+        PropertyNameType(String name, String defaultValue) {
+            this.name = name;
+            this.defaultValue = defaultValue;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getDefaultValue() {
+            return defaultValue;
+        }
+    }
 
     private static Properties properties;
     private static Class<?> callingClass;
@@ -38,13 +69,23 @@ public final class ConfigurationProperties {
     }
 
     protected static synchronized void init(PropertiesType propertiesType,
-            Class<?> callingClass) throws Exception {
+            Class<?> callingClass){
         properties = new Properties();
         List<PropertyType> handlerList = propertiesType.getProperty();
         for (PropertyType propertyType : handlerList) {
             properties.setProperty(propertyType.getNAME(), propertyType.getVAL());
         }
         ConfigurationProperties.callingClass = callingClass;
+    }
+
+    /**
+     * Get the property value for the given key. If the key is not found, the
+     * default value is returned.
+     * @param key PropertyNameType enum
+     * @return property value if defined in configuration else it returns default value for the key
+     */
+    public static String getProperty(PropertyNameType key) {
+        return properties.getProperty(key.getName(), key.getDefaultValue());
     }
 
     public static String getProperty(String key) {

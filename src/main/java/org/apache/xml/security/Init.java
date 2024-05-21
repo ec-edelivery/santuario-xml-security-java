@@ -26,9 +26,12 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.xml.security.algorithms.JCEMapper;
 import org.apache.xml.security.algorithms.SignatureAlgorithm;
+import org.apache.xml.security.algorithms.assertions.SecurityAssertions;
+import org.apache.xml.security.algorithms.assertions.SecurityValidationLevelType;
 import org.apache.xml.security.c14n.Canonicalizer;
 import org.apache.xml.security.exceptions.XMLSecurityException;
 import org.apache.xml.security.keys.keyresolver.KeyResolver;
@@ -146,6 +149,11 @@ public class Init {
         // Register the default key resolvers
         //
         KeyResolver.registerDefaultResolvers();
+
+        //
+        // init default security validation assertions
+        //
+        SecurityAssertions.initDefaultSecurityValidation();
     }
 
     /**
@@ -308,11 +316,74 @@ public class Init {
                         ElementProxy.setDefaultPrefix(namespace, prefix);
                     }
                 }
+
+                if ("SecurityAssertions".equals(tag)){
+                    LOG.log(Level.DEBUG, "Parse SecurityAssertions values from configuration file");
+                    initSecurityAssertion((Element)el);
+                }
+
+                if ("Properties".equals(tag)) {
+                    Element[] propElems =
+                        XMLUtils.selectNodes(el.getFirstChild(), CONF_NS, "Property");
+                    Properties properties = new Properties();
+                    for (Element propElem : propElems) {
+                        String name = propElem.getAttributeNS(null, "NAME");
+                        String value = propElem.getAttributeNS(null, "VAL");
+                        LOG.log(Level.DEBUG, "Add property: {0} -> {1}", name, value);
+                        properties.put(name, value);
+                    }
+                    SecurityValidationLevelType level = SecurityValidationLevelType.valueOf
+                            (properties.getProperty("SecurityValidationLevel", "INTERMEDIATE"));
+                    int maxReferenceCount = Integer.parseInt(
+                            properties.getProperty("MaximumAllowedReferencesPerManifest", "30"));
+                    int maxTransformationCount = Integer.parseInt(
+                            properties.getProperty("MaximumAllowedReferencesPerManifest", "5"));
+
+                    SecurityAssertions.initSecurityValidation(level, maxReferenceCount, maxTransformationCount);
+                }
+
             }
         } catch (Exception e) {
             LOG.log(Level.ERROR, "Bad: ", e);
         }
     }
 
+    /**
+     * Method initSecurityAssertion parses the SecurityAssertions configuration
+     * @param elSecurityAssertions the SecurityAssertions element
+     */
+    private static void initSecurityAssertion(Element elSecurityAssertions) {
+        LOG.log(Level.DEBUG, "Parse SecurityAssertions values from configuration file");
+
+        Element nlDeprecatedAlgs = XMLUtils.selectNode(elSecurityAssertions.getFirstChild(), CONF_NS, "DeprecatedAlgorithmURIs", 0);
+        if (nlDeprecatedAlgs==null) {
+            LOG.log(Level.DEBUG, "No deprecated algorithms defined, use default settings");
+            SecurityAssertions.registerDefaultDeprecatedAlgorithmURIs();
+        } else {
+            LOG.log(Level.DEBUG, "Deprecated algorithms defined");
+            Element[] deprecatedAlgorithms =
+                XMLUtils.selectNodes(nlDeprecatedAlgs.getFirstChild(), CONF_NS, "AlgorithmURI");
+            for (Element deprecatedAlgorithm : deprecatedAlgorithms) {
+                String algorithmURI = deprecatedAlgorithm.getAttributeNS(null, "URI");
+                LOG.log(Level.DEBUG, "Add deprecated algorithm: {0}", algorithmURI);
+                SecurityAssertions.registerDeprecatedAlgorithm(algorithmURI);
+            }
+        }
+
+        Element nlWealAlgorithm = XMLUtils.selectNode(elSecurityAssertions.getFirstChild(), CONF_NS, "WeakAlgorithmURIs", 0);
+        if (nlWealAlgorithm==null) {
+            LOG.log(Level.DEBUG, "No weak algorithms defined, use default settings");
+            SecurityAssertions.registerDefaultWeakAlgorithmURIs();
+        } else {
+            LOG.log(Level.DEBUG, "Weak algorithms defined");
+            Element[] weakAlgorithms =
+                    XMLUtils.selectNodes(nlWealAlgorithm.getFirstChild(), CONF_NS, "AlgorithmURI");
+            for (Element weakAlgorithm : weakAlgorithms) {
+                String algorithmURI = weakAlgorithm.getAttributeNS(null, "URI");
+                LOG.log(Level.DEBUG, "Add deprecated algorithm: {0}", algorithmURI);
+                SecurityAssertions.registerWeakAlgorithm(algorithmURI);
+            }
+        }
+    }
 }
 

@@ -30,6 +30,7 @@
         <Property NAME="MaximumAllowedEncryptedDataEvents" VAL="200"/>
         <Property NAME="DefaultLanguageCode" VAL="en"/>
         <Property NAME="DefaultCountryCode" VAL="US"/>
+        <Property NAME="SecurityValidationLevel" VAL="INTERMEDIATE"/>
     </Properties>
     <SecurityHeaderHandlers>
     </SecurityHeaderHandlers>
@@ -586,4 +587,37 @@
         <Resolver JAVACLASS="org.apache.xml.security.stax.impl.resourceResolvers.ResolverXPointer"
                   DESCRIPTION="A simple resolver for requests of XPointer fragments"/>
     </ResourceResolvers>
+    <SecurityAssertion>
+        <DeprecatedAlgorithmURIs>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmldsig-more#md5</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmldsig-more#hmac-md5</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmldsig-more#rsa-md5</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmlenc#dh</AlgorithmURI>
+        </DeprecatedAlgorithmURIs>
+        <WeakAlgorithmURIs>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmlenc#tripledes-cbc</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmlenc#kw-tripledes</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2000/09/xmldsig#sha1</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2000/09/xmldsig#dsa-sha1</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2009/xmldsig11#dsa-sha256</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2000/09/xmldsig#rsa-sha1</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2000/09/xmldsig#hmac-sha1</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmldsig-more#hmac-sha224</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmlenc#aes128-cbc</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmlenc#aes192-cbc</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmlenc#aes256-cbc</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2009/xmlenc11#mgf1sha1</AlgorithmURI>
+            <AlgorithmURI>http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p</AlgorithmURI>
+        </WeakAlgorithmURIs>
+        <AssertSecureParameterImplementations>
+            <SecureAlgorithmParameterAsserter URI='http://www.w3.org/2021/04/xmldsig-more#hkdf'
+                                JAVACLASS='org.apache.xml.security.algorithms.assertions.impl.AssertSecureHKDF' />
+            <SecureAlgorithmParameterAsserter URI='http://www.w3.org/2009/xmlenc11#ECDH-ES'
+                                JAVACLASS='org.apache.xml.security.algorithms.assertions.impl.AssertSecureKeyAgreementParameters' />
+            <SecureAlgorithmParameterAsserter URI='http://www.w3.org/2021/04/xmldsig-more#x25519'
+                                JAVACLASS='org.apache.xml.security.algorithms.assertions.impl.AssertSecureKeyAgreementParameters' />
+            <SecureAlgorithmParameterAsserter URI='http://www.w3.org/2021/04/xmldsig-more#x448'
+                                JAVACLASS='org.apache.xml.security.algorithms.assertions.impl.AssertSecureKeyAgreementParameters' />
+        </AssertSecureParameterImplementations>
+    </SecurityAssertion>
 </Configuration>

@@ -51,11 +51,13 @@ import javax.xml.transform.TransformerConfigurationException;
 
 import org.apache.xml.security.algorithms.JCEMapper;
 import org.apache.xml.security.algorithms.MessageDigestAlgorithm;
+import org.apache.xml.security.algorithms.assertions.SecurityAssertions;
 import org.apache.xml.security.c14n.Canonicalizer;
 import org.apache.xml.security.c14n.InvalidCanonicalizerException;
 import org.apache.xml.security.encryption.keys.KeyInfoEnc;
 import org.apache.xml.security.encryption.params.KeyAgreementParameters;
 import org.apache.xml.security.exceptions.XMLSecurityException;
+import org.apache.xml.security.exceptions.XMLSecurityValidationException;
 import org.apache.xml.security.keys.KeyInfo;
 import org.apache.xml.security.encryption.keys.content.AgreementMethodImpl;
 import org.apache.xml.security.keys.keyresolver.KeyResolverException;
@@ -1357,7 +1359,6 @@ public final class XMLCipher {
             SecureRandom random
     ) throws XMLEncryptionException {
         LOG.log(Level.DEBUG, "Encrypting key using algorithm specs [{0}] ...", params);
-
         if (null == key) {
             throw new XMLEncryptionException("empty", "Key unexpectedly null...");
         }
@@ -1368,6 +1369,7 @@ public final class XMLCipher {
             throw new XMLEncryptionException("empty", "XMLCipher instance without transformation specified");
         }
 
+        assertSecureEncAlgorithmURI(algorithm);
         contextDocument = doc;
 
         byte[] encryptedBytes = null;
@@ -1445,6 +1447,20 @@ public final class XMLCipher {
             throw new XMLEncryptionException(ex);
         }
         return ek;
+    }
+
+    /**
+     * Method to verify that the algorithm is secure and throws XMLEncryptionException
+     * if it is not
+     * @throws XMLEncryptionException if algorithm must not be used because it is insecure
+     */
+    private void assertSecureEncAlgorithmURI(String algorithmUri) throws XMLEncryptionException {
+        // Sanity check to make sure that the algorithm is a secure one
+        try {
+            SecurityAssertions.assertSecureAlgorithmURI(algorithmUri);
+        } catch (XMLSecurityValidationException e) {
+            throw new XMLEncryptionException(e);
+        }
     }
 
     /**
@@ -1552,6 +1568,14 @@ public final class XMLCipher {
         if (keyAgreementParameter == null) {
             return;
         }
+        try {
+            // Validate the key agreement algorithm
+            SecurityAssertions.assertSecureAlgorithmParameters(keyAgreementParameter.getKeyAgreementAlgorithm(), keyAgreementParameter);
+        } catch (XMLSecurityValidationException e) {
+            throw new XMLEncryptionException(e);
+        }
+
+
         // check if the recipient's public key is set in keyAgreementParameter, if not, use the recipient's public key
         // specified in XMLCipher instance init method.
         if (keyAgreementParameter.getRecipientPublicKey() == null && this.key != null) {
